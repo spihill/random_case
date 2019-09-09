@@ -20,19 +20,19 @@ string itos(unsigned int x) {
 	return res;
 }
 
-void case_solve(string& in, string& out) {
+void case_solve(const string& in, const string& out) {
 	ifstream input(in);
 	ofstream output(out);
 	solve(input, output);
 }
 
-void case_correct(string& in, string& out) {
+void case_correct(const string& in, const string& out) {
 	ifstream input(in);
 	ofstream output(out);
 	correct(input, output);
 }
 
-bool check_diff(string& out, string& ans) {
+bool check_diff(const string& out, const string& ans) {
 	ifstream output(out);
 	ifstream answer(ans);
 	string s, t;
@@ -47,9 +47,9 @@ bool check_diff(string& out, string& ans) {
 void case_check(int& WA, int& RE) {
 	using namespace chrono;
 	int id = WA + RE;
-	string input = "random_" + itos(id) + "_in.txt";
-	string output = "random_" + itos(id) + "_out.txt";
-	string answer = "random_" + itos(id) + "_ans.txt";
+	const string input = "random_" + itos(id) + "_in.txt";
+	const string output = "random_" + itos(id) + "_out.txt";
+	const string answer = "random_" + itos(id) + "_ans.txt";
 	make_random(input);
 	case_solve(input, output);
 	case_correct(input, answer);
@@ -61,7 +61,7 @@ int main() {
 	int RE = 0;
 	int count = 0;
 	vector<int> wa, re;
-	while (WA < 3) {
+	while (WA + RE < 3 && count < 100) {
 		int w = WA, r = RE;
 		case_check(WA, RE);
 		if (w != WA) wa.push_back(WA + RE - 1);
@@ -79,4 +79,5 @@ int main() {
 		for (auto x : re) cout << " " << x;
 		cout << endl;
 	}
+	return WA + RE;
 }
