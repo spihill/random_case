@@ -13,8 +13,8 @@ main.out: main.cpp
 $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 
-check: check.out
-	./check.out
+check: $(TARGET)
+	./$(TARGET)
 
 clean:
 	rm *.o
@@ -24,3 +24,7 @@ clean_txt:
 	rm random_*_in.txt
 	rm random_*_out.txt
 	rm random_*_ans.txt
+
+clean_all:
+	make clean
+	make clean_txt
