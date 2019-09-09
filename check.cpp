@@ -1,7 +1,9 @@
-#include <bits/stdc++.h>
-
-#include <unistd.h>
-#include <sys/wait.h>
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <chrono>
+#include <algorithm>
 
 using namespace std;
 
@@ -69,12 +71,12 @@ int main() {
 		cout << '\r' << "Running case number : " << count++ << ", WA: " << WA << " RE: "<< RE ; cout.flush();
 	}
 	cout << endl;
-	if (wa.size()) {
+	if (!wa.empty()) {
 		cout << "WA on case";
 		for (auto x : wa) cout << " " << x;
 		cout << endl;
 	}
-	if (re.size()) {
+	if (!re.empty()) {
 		cout << "RE on case";
 		for (auto x : re) cout << " " << x;
 		cout << endl;
