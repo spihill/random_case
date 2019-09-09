@@ -2,10 +2,10 @@
 
 using namespace std;
 
-#define cin is
-#define cout os
+#define cin input
+#define cout output
 
-void correct(istream& is, ostream& os) {
+void correct(istream& input, ostream& output) {
 	int n;
 	cin >> n;
 	int res = 0;
