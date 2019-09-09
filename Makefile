@@ -21,4 +21,6 @@ clean:
 	rm *.out
 
 clean_txt:
-	rm *.txt
+	rm random_*_in.txt
+	rm random_*_out.txt
+	rm random_*_ans.txt
