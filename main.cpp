@@ -2,28 +2,13 @@
 
 using namespace std;
 
-#define cin input
-#define cout output
-
-void solve(istream& input, ostream& output) {
+int main() {
 	int n;
 	cin >> n;
 	int res = 0;
-	for (int i = 0; i < n; i++) {
-		int t;
-		cin >> t;
-		res += t;
-	}
-	cout << res + 1 << endl;
+	vector<int> v(n);
+	for (int i = 0; i < n; i++) cin >> v[i];
+	for (int i = 0; i < n; i++) res += v[i];
+	if (res == 10) res = 0;
+	cout << res << endl;
 }
-
-#undef cin
-#undef cout
-
-#ifndef CHECK_CPP
-
-int main() {
-	solve(cin, cout);
-}
-
-#endif

@@ -2,37 +2,19 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <chrono>
 #include <algorithm>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 using namespace std;
 
+#define quote(x) quote_sub(x)
+#define quote_sub(x) #x
+
 void make_random(const string& output);
-void solve(istream& is, ostream& os);
-void correct(istream& is, ostream& os);
-
-string itos(unsigned int x) {
-	if (x == 0) return "0";
-	string res = "";
-	while (x) {
-		res += (char) (x % 10 + '0');
-		x /= 10;
-	}
-	reverse(res.begin(), res.end());
-	return res;
-}
-
-void case_solve(const string& in, const string& out) {
-	ifstream input(in);
-	ofstream output(out);
-	solve(input, output);
-}
-
-void case_correct(const string& in, const string& out) {
-	ifstream input(in);
-	ofstream output(out);
-	correct(input, output);
-}
 
 bool check_diff(const string& out, const string& ans) {
 	ifstream output(out);
@@ -46,16 +28,68 @@ bool check_diff(const string& out, const string& ans) {
 	}
 }
 
+ofstream open_file_append(const string& file_name) {
+	return ofstream(file_name, ios::app);
+}
+
+int execute(const string& exe_filename, const vector<string>& args, const string& input_file, const string& output_file, const string& error_file, const string& RE_message) {
+	pid_t pid;
+	int status;
+	if ((pid = fork()) == -1) {
+		cerr << "fork() failed" << endl;
+		abort();
+	} else if (pid > 0){
+		waitpid(pid, &status, 0);
+		if (WIFEXITED(status)) {
+			if (WEXITSTATUS(status) == 0) return 0;
+			open_file_append(RE_message) << "Exited with code " << WEXITSTATUS(status) << "." << endl;
+		} else if (WIFSIGNALED(status)) {
+			int signal = WTERMSIG(status);
+			open_file_append(RE_message) << "Exited with SIGNAL " << signal << "." << endl;
+			if (signal == SIGSEGV) open_file_append(RE_message) << "Segmentation fault." << endl;
+			else if (signal == SIGFPE) open_file_append(RE_message) << "Floating point exception." << endl;
+		}
+		return 1;
+	} else {
+		char** arg = new char*[args.size() + 1];
+		for (size_t i = 0; i < args.size(); i++) {
+			arg[i] = (char*) args[i].c_str();
+		}
+		arg[args.size()] = nullptr;
+		int in = open(input_file.c_str(), O_RDONLY, S_IRUSR | S_IWUSR);
+		int out = open(output_file.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+		int error = open(error_file.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+		dup2(in, 0);
+		dup2(out, 1);
+		dup2(error, 2);
+		close(in);
+		close(out);
+		close(error);
+		execvp(exe_filename.c_str(), (char* const*) arg);
+		perror("execute");
+		abort();
+	}
+}
+
 void case_check(int& WA, int& RE) {
-	using namespace chrono;
 	int id = WA + RE;
-	const string input = "random_" + itos(id) + "_in.txt";
-	const string output = "random_" + itos(id) + "_out.txt";
-	const string answer = "random_" + itos(id) + "_ans.txt";
+	const string random_dir = string(quote(RANDOM_DIR)) + "/case" + to_string(id) + '/';
+	mkdir(random_dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+	const string suff = ".txt";
+	const string input = random_dir + "input" + suff;
+	const string output = random_dir + "output" + suff;
+	const string error = random_dir + "error" + suff;
+	const string answer = random_dir + "answer" + suff;
+	const string re_message = random_dir + "RE" + suff;
+	const string answer_error = random_dir + "answer_error" + suff;
+	const string answer_re_message = random_dir + "answer_RE" + suff;
 	make_random(input);
-	case_solve(input, output);
-	case_correct(input, answer);
-	if (!check_diff(output, answer)) WA++;
+	if (execute("./correct.out", {"./correct.out"}, input, answer, answer_error, answer_re_message) != 0) {
+		cerr << "Runtime Error(corect.cpp) on case " << id << "." << endl;
+		abort();
+	}
+	if (execute("./main.out", {"./main.out"}, input, output, error, re_message) != 0) RE++;
+	else if (!check_diff(output, answer)) WA++;
 }
 
 int main() {
@@ -63,7 +97,7 @@ int main() {
 	int RE = 0;
 	int count = 0;
 	vector<int> wa, re;
-	while (WA + RE < 3 && count < 100) {
+	while (WA + RE < 3 && count < 10000) {
 		int w = WA, r = RE;
 		case_check(WA, RE);
 		if (w != WA) wa.push_back(WA + RE - 1);
@@ -81,5 +115,5 @@ int main() {
 		for (auto x : re) cout << " " << x;
 		cout << endl;
 	}
-	return WA + RE;
+	return 0;
 }

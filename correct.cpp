@@ -2,10 +2,7 @@
 
 using namespace std;
 
-#define cin input
-#define cout output
-
-void correct(istream& input, ostream& output) {
+int main() {
 	int n;
 	cin >> n;
 	int res = 0;
@@ -16,6 +13,3 @@ void correct(istream& input, ostream& output) {
 	}
 	cout << res << endl;
 }
-
-#undef cin
-#undef cout

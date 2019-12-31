@@ -3,24 +3,11 @@
 using namespace std;
 
 struct random_class {
-	struct xorshift {
-		using result_type = unsigned int;
-		result_type x=123456789u,y=362436069u,z=521288629u,w;
-		static constexpr result_type min() {return 0u;}
-		static constexpr result_type max() {return UINT_MAX;}
-		xorshift(result_type a) : w(a) {}
-		result_type operator()() {
-			result_type t;
-			t = x ^ (x << 11);
-			x = y; y = z; z = w;
-			return w = (w ^ (w >> 19)) ^ (t ^ (t >> 8));
-		}
-	};
 	random_device rd;
-	xorshift xor128;
+	mt19937 engine;
 	ostream& os;
-	random_class(ostream& o) : rd(), xor128(rd()), os(o) {}
-	int make_random(int min_v, int max_v) { return uniform_int_distribution<int>(min_v, max_v)(xor128);}
+	random_class(ostream& o) : rd(), engine(rd()), os(o) {}
+	int make_random(int min_v, int max_v) { return uniform_int_distribution<int>(min_v, max_v)(engine);}
 };
 
 struct array_int : public random_class {
@@ -36,7 +23,7 @@ struct array_int : public random_class {
 		unordered_set<int> s;
 		vector<int> v;
 		for (int i = 0; i < sz; i++) {
-			int t = u(random_class::xor128);
+			int t = u(engine);
 			if (!dup && s.count(t)) i--;
 			else v.push_back(t), s.insert(t);
 		}
@@ -49,8 +36,8 @@ struct array_int : public random_class {
 		os << endl;
 	}
 	void constrains() {
-		dup = true; // 重複を許すか
-		inc = true; // 増加列か
+		dup = false; // 重複を許すか
+		inc = false; // 増加列か
 		dec = false; // 減少列か
 	}
 };
