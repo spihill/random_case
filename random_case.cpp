@@ -17,7 +17,7 @@ struct array_int : public random_class {
 	bool dup;
 	bool inc;
 	bool dec;
-	array_int(int n, T min_v, T max_v) : random_class(), sz(n), u(min_v, max_v) {constrains();}
+	array_int(int n, T min_v, T max_v) : random_class(), sz(n), u(min_v, max_v) {constrains(); generate();}
 	void generate() {
 		assert(!(inc && dec));
 		assert(dup || (sz <= (u.max() - u.min() + 1)));
@@ -38,7 +38,7 @@ struct array_int : public random_class {
 	friend ostream& operator<<(ostream& os, const array_int& ar) {
 		for (size_t i = 0; i < ar.v.size(); i++) {
 			if (i) os << " ";
-			os << ar;
+			os << ar.v[i];
 		}
 		return os;
 	}
@@ -48,7 +48,7 @@ void make_random(const string& output) {
 	ofstream os(output);
 	random_class rc;
 	auto N = rc.make_random(3, 5);
-	os << N << endl;
 	array_int<> A(N, 1, 10);
+	os << N << endl;
 	os << A << endl;
 }
