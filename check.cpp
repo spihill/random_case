@@ -97,7 +97,7 @@ int main() {
 	int RE = 0;
 	int count = 0;
 	vector<int> wa, re;
-	while (WA + RE < 3 && count < 10000) {
+	while (WA + RE < 10 && count < 10000) {
 		int w = WA, r = RE;
 		case_check(WA, RE);
 		if (w != WA) wa.push_back(WA + RE - 1);
