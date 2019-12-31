@@ -1,4 +1,4 @@
-RANDOM_DIR = ./generate_cases
+RANDOM_DIR = ./generated_cases
 CXX = g++
 OBJS = check.o random_case.o
 CXXFLAGS = -Wall -std=c++14 -DCHECK_CPP -DRANDOM_DIR="$(RANDOM_DIR)"
