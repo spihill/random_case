@@ -48,9 +48,9 @@ struct dataclass : public base_dataclass<T> {
 };
 
 struct random_class {
-	random_device rd;
-	mt19937 engine;
-	random_class() : rd(), engine(rd()) {}
+	static random_device rd;
+	static mt19937 engine;
+	random_class() {}
 	template<class T>
 	enable_if_t<is_arithmetic<T>::value, T> make_random(T min_v, T max_v) {
 		return make_random_number(min_v, max_v);
@@ -77,6 +77,18 @@ struct random_class {
 		if (dec) sort(v.rbegin(), v.rend());
 		return v;
 	}
+	template<class T>
+	enable_if_t<has_dataclass_tag<T>::value && is_integral<typename T::value_type>::value, vector<typename T::value_type>> make_random_permutation(T& dc) {
+		uint32_t vector_size = dc.max_v - dc.min_v + 1;
+		vector<typename T::value_type> v;
+		unordered_set<typename T::value_type> s;
+		for (size_t i = 0; i < vector_size; i++) {
+			typename T::value_type t = make_random(dc);
+			if (s.count(t)) i--;
+			else v.push_back(t), s.insert(t);
+		}
+		return v;
+	}
 private:
 	template<class T>
 	T make_random_number(T min_v, T max_v) { return uniform_int_distribution<T>(min_v, max_v)(engine);}
@@ -84,6 +96,9 @@ private:
 template<> double random_class::make_random_number<double>(double min_v, double max_v) { return uniform_real_distribution<double>(min_v, max_v)(engine);}
 template<> long double random_class::make_random_number<long double>(long double min_v, long double max_v) { return uniform_real_distribution<long double>(min_v, max_v)(engine);}
 template<> float random_class::make_random_number<float>(float min_v, float max_v) { return uniform_real_distribution<float>(min_v, max_v)(engine);}
+
+random_device random_class::rd;
+mt19937 random_class::engine(rd());
 
 template<class T>
 random_select_class<T> make_data(initializer_list<T> il) {
