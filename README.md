@@ -1,6 +1,6 @@
 # random_case generator
 ## ソースコード
-- random_case.cpp ... ランダムケース生成をするプログラム。make_random 関数をいじる (変数 os にテストケースを流す)。
+- random_case.cpp ... ランダムケース生成をするプログラム。標準出力にテストケースを流す。
 - main.cpp ... 提出予定のソースコード  
   ```shell
   $ make main
@@ -16,7 +16,7 @@
   Makefileの RANDOM_DIR を変更することでディレクトリの変更可。
 ## Makefile
 - RANDOM_DIR ... テストケースや出力を格納するディレクトリ
-- CXXFLAGS ... check.cpp と random_case.cpp のコンパイルオプション
+- CXXFLAGS ... C++のコンパイルオプション
 - main ... main.cpp の実行
 - check ... check.cpp の実行
 - clean ... オブジェクトファイルや実行ファイルの削除

@@ -7,14 +7,13 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include<cassert>
 #include <sys/stat.h>
 
 using namespace std;
 
 #define quote(x) quote_sub(x)
 #define quote_sub(x) #x
-
-void make_random(const string& output);
 
 bool check_diff(const string& out, const string& ans) {
 	ifstream output(out);
@@ -32,6 +31,14 @@ ofstream open_file_append(const string& file_name) {
 	return ofstream(file_name, ios::app);
 }
 
+#define CONNECT_FD(file, to, option) do { \
+	if (file != "") { \
+		int fd = open((file).c_str(), (option), S_IRUSR | S_IWUSR); \
+		dup2(fd, (to)); \
+		close(fd); \
+	} \
+} while (0);
+
 int execute(const string& exe_filename, const vector<string>& args, const string& input_file, const string& output_file, const string& error_file, const string& RE_message) {
 	pid_t pid;
 	int status;
@@ -39,7 +46,8 @@ int execute(const string& exe_filename, const vector<string>& args, const string
 		cerr << "fork() failed" << endl;
 		abort();
 	} else if (pid > 0){
-		waitpid(pid, &status, 0);
+		pid_t r = waitpid(pid, &status, 0);
+		assert(pid == r);
 		if (WIFEXITED(status)) {
 			if (WEXITSTATUS(status) == 0) return 0;
 			open_file_append(RE_message) << "Exited with code " << WEXITSTATUS(status) << "." << endl;
@@ -56,15 +64,9 @@ int execute(const string& exe_filename, const vector<string>& args, const string
 			arg[i] = (char*) args[i].c_str();
 		}
 		arg[args.size()] = nullptr;
-		int in = open(input_file.c_str(), O_RDONLY, S_IRUSR | S_IWUSR);
-		int out = open(output_file.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-		int error = open(error_file.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-		dup2(in, 0);
-		dup2(out, 1);
-		dup2(error, 2);
-		close(in);
-		close(out);
-		close(error);
+		CONNECT_FD(input_file, 0, O_RDONLY);
+		CONNECT_FD(output_file, 1, O_RDWR | O_CREAT | O_TRUNC);
+		CONNECT_FD(error_file, 2, O_RDWR | O_CREAT | O_TRUNC);
 		execvp(exe_filename.c_str(), (char* const*) arg);
 		perror("execute");
 		abort();
@@ -83,7 +85,12 @@ void case_check(int& WA, int& RE) {
 	const string re_message = random_dir + "RE" + suff;
 	const string answer_error = random_dir + "answer_error" + suff;
 	const string answer_re_message = random_dir + "answer_RE" + suff;
-	make_random(input);
+	const string random_re_message = random_dir + "makerandom_RE" + suff;
+	const string dummy = "";
+	if (execute("./random_case.out", {"./random_case.out"}, dummy, input, dummy, random_re_message) != 0) {
+		cerr << "Runtime Error(random_case.cpp) on case " << id << "." << endl;
+		abort();
+	}
 	if (execute("./correct.out", {"./correct.out"}, input, answer, answer_error, answer_re_message) != 0) {
 		cerr << "Runtime Error(corect.cpp) on case " << id << "." << endl;
 		abort();
