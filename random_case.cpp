@@ -50,6 +50,7 @@ struct dataclass : public base_dataclass<T> {
 struct random_class {
 	static random_device rd;
 	static mt19937 engine;
+	using u64 = uint_fast64_t;
 	random_class() {}
 	template<class T>
 	enable_if_t<is_arithmetic<T>::value, T> make_random(T min_v, T max_v) {
@@ -67,7 +68,7 @@ struct random_class {
 	enable_if_t<has_dataclass_tag<T>::value, vector<typename T::value_type>> make_random_vector(size_t vector_size, T& dc, bool dup = true, bool inc = false, bool dec = false) {
 		vector<typename T::value_type> v;
 		assert(!(inc && dec));
-		unordered_set<typename T::value_type> s;
+		set<typename T::value_type> s;
 		for (size_t i = 0; i < vector_size; i++) {
 			typename T::value_type t = make_random(dc);
 			if (!dup && s.count(t)) i--;
@@ -81,7 +82,7 @@ struct random_class {
 	enable_if_t<has_dataclass_tag<T>::value && is_integral<typename T::value_type>::value, vector<typename T::value_type>> make_random_permutation(T& dc) {
 		uint32_t vector_size = dc.max_v - dc.min_v + 1;
 		vector<typename T::value_type> v;
-		unordered_set<typename T::value_type> s;
+		set<typename T::value_type> s;
 		for (size_t i = 0; i < vector_size; i++) {
 			typename T::value_type t = make_random(dc);
 			if (s.count(t)) i--;
@@ -89,9 +90,52 @@ struct random_class {
 		}
 		return v;
 	}
+	// vector<vector<size_t>> make_random_graph(size_t V, size_t E, bool connected = true) {
+	// 	if (connected) {
+	// 		assert(V <= E + 1);
+	// 	}
+	// }
+	vector<vector<size_t>> make_random_tree(size_t V) {
+		auto v = make_random_tree_sub(V);
+		vector<vector<size_t>> res(V);
+		for (size_t i = 0; i < V; i++) {
+			for (auto x : v[i]) res[i].push_back(x);
+		}
+		return res;
+	}
 private:
+	vector<set<size_t>> make_random_tree_sub(size_t V) {
+		vector<set<size_t>> g(V);
+		for (size_t i = 1; i < V; i++) {
+			g[i].insert(make_random<size_t>(0, i-1));
+		}
+		return g;
+	}
 	template<class T>
 	T make_random_number(T min_v, T max_v) { return uniform_int_distribution<T>(min_v, max_v)(engine);}
+	vector<u64> make_random_divide(size_t len, u64 sum, u64 min_v = 0) {
+		assert(len);
+		if (min_v) {
+			assert(min_v * len <= sum);
+			auto res = make_random_divide(len, sum - min_v * len);
+			for (auto& x : res) x += min_v;
+			return res;
+		}
+		u64 N = sum + len - 1;
+		vector<u64> pos{0, N+1};
+		unordered_set<u64> s;
+		for (size_t i = 1; i < len; i++) {
+			u64 t = make_random<u64>(1, N);
+			if (s.count(t)) i--;
+			else pos.push_back(t), s.insert(t);
+		}
+		sort(pos.begin(), pos.end());
+		vector<u64> res(len);
+		for (size_t i = 0; i < len; i++) {
+			res[i] = pos[i+1] - pos[i] - 1;
+		}
+		return res;
+	}
 };
 template<> double random_class::make_random_number<double>(double min_v, double max_v) { return uniform_real_distribution<double>(min_v, max_v)(engine);}
 template<> long double random_class::make_random_number<long double>(long double min_v, long double max_v) { return uniform_real_distribution<long double>(min_v, max_v)(engine);}
