@@ -37,7 +37,7 @@ ofstream open_file_append(const string& file_name) {
 		dup2(fd, (to)); \
 		close(fd); \
 	} \
-} while (0);
+} while (0)
 
 int execute(const string& exe_filename, const vector<string>& args, const string& input_file, const string& output_file, const string& error_file, const string& RE_message) {
 	pid_t pid;
@@ -99,12 +99,15 @@ void case_check(int& WA, int& RE) {
 	else if (!check_diff(output, answer)) WA++;
 }
 
+constexpr int NUM_OF_TESTCASES = 10;
+constexpr int MAX_LOOP = 10000;
+
 int main() {
 	int WA = 0;
 	int RE = 0;
 	int count = 0;
 	vector<int> wa, re;
-	while (WA + RE < 10 && count < 10000) {
+	while (WA + RE < NUM_OF_TESTCASES && count < MAX_LOOP) {
 		int w = WA, r = RE;
 		case_check(WA, RE);
 		if (w != WA) wa.push_back(WA + RE - 1);
