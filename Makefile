@@ -1,7 +1,7 @@
 RANDOM_DIR = ./generated_cases
 CXX = g++
 OBJS = check.o random_case.o
-CXXFLAGS = -Wall -std=c++14 -DCHECK_CPP -DRANDOM_DIR="$(RANDOM_DIR)"
+CXXFLAGS = -Wall -std=c++14 -O2 -DRANDOM_DIR="$(RANDOM_DIR)"
 TARGET = check.out
 RM = rm -f
 
@@ -9,15 +9,13 @@ RM = rm -f
 
 main: main.out
 	./main.out
-main.out: main.cpp
-	g++ -Wall -std=c++14 $^ -o $@
-correct.out: correct.cpp
-	g++ -Wall -std=c++14 $^ -o $@
 
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
+check.out: random_case.out main.out correct.out
 
-check: main.out correct.out $(TARGET)
+.cpp.out:
+	$(CXX) $(CXXFLAGS) $< -o $@
+
+check: main.out correct.out random_case.out $(TARGET)
 	mkdir -p $(RANDOM_DIR)
 	make clean_txt
 	./$(TARGET)
@@ -29,6 +27,4 @@ clean:
 clean_txt:
 	$(RM) -r $(RANDOM_DIR)/case*
 
-clean_all:
-	make clean
-	make clean_txt
+clean_all: clean clean_txt

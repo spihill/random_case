@@ -110,16 +110,14 @@ enable_if_t<is_arithmetic<T>::value, dataclass<T>> make_data(T min_v, T max_v) {
 	return dataclass<T>(min_v, max_v);
 }
 
-void make_random(const string& output) {
-	ofstream os(output);
+int main() {
 	random_class rc;
-	// auto X = make_data({3, 4, 5});
-	// random_select_class<int> X{3, 4, 5};
 	auto X = make_data(3, 5);
 	auto Y = make_data({1, 2, 4, 5, 6, 9});
 	int N = rc.make_random(X);
+	cout << N << endl;
 	auto A = rc.make_random_vector(N, Y);
-	os << N << endl;
-	for (auto x : A) os << x << " ";
-	os << endl;
+	assert(int(A.size()) == N);
+	for (auto x : A) cout << x << " ";
+	cout << endl;
 }
