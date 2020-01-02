@@ -90,11 +90,37 @@ struct random_class {
 		}
 		return v;
 	}
-	// vector<vector<size_t>> make_random_graph(size_t V, size_t E, bool connected = true) {
-	// 	if (connected) {
-	// 		assert(V <= E + 1);
-	// 	}
-	// }
+	vector<vector<size_t>> make_random_graph(size_t V, size_t E, bool connected = true) {
+		assert(V > 0);
+		assert(!connected || V - 1 <= E);
+		u64 MAX_E = V * (V - 1) / 2;
+		assert(E <= MAX_E);
+		size_t e = size_t(min<u64>(MAX_E - E, E));
+		vector<set<size_t>> vs_origin = connected ? make_random_tree_sub(V) : vector<set<size_t>>(V);
+		auto vs = vs_origin;
+		e -= (connected && E == e) ? V - 1 : 0;
+		make_random_graph_sub(V, e, vs);
+		vector<vector<size_t>> res(V);
+		if (E <= MAX_E - E) {
+			for (size_t i = 0; i < V; i++) {
+				for (auto x : vs[i]) {
+					res[i].push_back(x);
+				}
+			}
+		} else {
+			for (size_t i = 0; i < V; i++) {
+				for (size_t j = i+1; j < V; j++) {
+					if (!vs[i].count(j)) res[i].push_back(j);
+				}
+			}
+			for (size_t i = 0; i < V; i++) {
+				for (auto x : vs_origin[i]) {
+					res[i].push_back(x);
+				}
+			}
+		}
+		return res;
+	}
 	vector<vector<size_t>> make_random_tree(size_t V) {
 		auto v = make_random_tree_sub(V);
 		vector<vector<size_t>> res(V);
@@ -107,9 +133,18 @@ private:
 	vector<set<size_t>> make_random_tree_sub(size_t V) {
 		vector<set<size_t>> g(V);
 		for (size_t i = 1; i < V; i++) {
-			g[i].insert(make_random<size_t>(0, i-1));
+			g[make_random<size_t>(0, i-1)].insert(i);
 		}
 		return g;
+	}
+	void make_random_graph_sub(size_t V, size_t E, vector<set<size_t>>& used) {
+		size_t from, to;
+		size_t cnt = 0;
+		for (size_t i = 0; i < E && cnt++ <= 1000; i++) {
+			make_random_simple_edge_(V, from, to);
+			if (used[from].count(to)) i--;
+			else used[from].insert(to);
+		}
 	}
 	template<class T>
 	T make_random_number(T min_v, T max_v) { return uniform_int_distribution<T>(min_v, max_v)(engine);}
@@ -135,6 +170,11 @@ private:
 			res[i] = pos[i+1] - pos[i] - 1;
 		}
 		return res;
+	}
+	void make_random_simple_edge_(size_t V, size_t& from, size_t& to) {
+		from = make_random<size_t>(0, V-1);
+		while ((to = make_random<size_t>(0, V-1)) == from);
+		if (from > to) swap(from, to);
 	}
 };
 template<> double random_class::make_random_number<double>(double min_v, double max_v) { return uniform_real_distribution<double>(min_v, max_v)(engine);}
@@ -164,4 +204,10 @@ int main() {
 	assert(int(A.size()) == N);
 	for (auto x : A) cout << x << " ";
 	cout << endl;
+	// int V = 10, E = 5;
+	// cout << V << " " << E << endl;
+	// auto g = rc.make_random_graph(V, E, false);
+	// for (int i = 0; i < V; i++) {
+	// 	for (auto x : g[i]) cout << i << " " << x << endl;
+	// }
 }
