@@ -15,38 +15,38 @@ template <class T>
 class has_il :
 	public decltype(has_il_impl::check<T>(nullptr)) {};
 
-struct has_dataclass_impl {
+struct has_data_class_impl {
 	template <class T>
-	static std::true_type check(typename T::dataclass_tag*);
+	static std::true_type check(typename T::data_class_tag*);
 	template <class T>
 	static std::false_type check(...);
 };
 
 template <class T>
-class has_dataclass_tag :
-	public decltype(has_dataclass_impl::check<T>(nullptr)) {};
+class has_data_class_tag :
+	public decltype(has_data_class_impl::check<T>(nullptr)) {};
 
 template<class T, class Enable = void>
-struct base_dataclass;
+struct base_data_class;
 
 template<class T>
-struct base_dataclass<T, enable_if_t<is_arithmetic<T>::value>> {
+struct base_data_class<T, enable_if_t<is_arithmetic<T>::value>> {
 	using value_type = T;
-	struct dataclass_tag {};
+	struct data_class_tag {};
 	T min_v, max_v;
-	base_dataclass(T min_value, T max_value) : min_v(min_value), max_v(max_value) {assert(min_v <= max_v);}
+	base_data_class(T min_value, T max_value) : min_v(min_value), max_v(max_value) {assert(min_v <= max_v);}
 };
 
 template<class T>
-struct random_select_class : public base_dataclass<size_t> {
+struct random_select_class : public base_data_class<size_t> {
 	vector<T> il;
-	random_select_class(initializer_list<T> il_) : base_dataclass(size_t(0), il_.size()-1), il{il_} {}
+	random_select_class(initializer_list<T> il_) : base_data_class(size_t(0), il_.size()-1), il{il_} {}
 };
 
 template<class T>
-struct dataclass : public base_dataclass<T> {
+struct data_class : public base_data_class<T> {
 	template<class... Args>
-	dataclass(Args... args) : base_dataclass<T>(args...) {}
+	data_class(Args... args) : base_data_class<T>(args...) {}
 };
 
 u32 seed;
@@ -54,20 +54,29 @@ u32 seed;
 struct random_class {
 	mt19937 engine;
 	random_class() : engine(seed) {}
+	// min_v : 生成する乱数の最小値
+	// max_v : 生成する乱数の最大値
 	template<class T>
 	enable_if_t<is_arithmetic<T>::value, T> make_random(T min_v, T max_v) {
 		return make_random_number(min_v, max_v);
 	}
+	// dc : data_class
 	template<class T>
-	enable_if_t<has_dataclass_tag<T>::value && has_il<T>::value, typename T::value_type> make_random(const T& dc) {
+	enable_if_t<has_data_class_tag<T>::value && has_il<T>::value, typename T::value_type> make_random(const T& dc) {
 		return dc.il[make_random_number(dc.min_v, dc.max_v)];
 	}
+	// dc : data_class
 	template<class T>
-	enable_if_t<has_dataclass_tag<T>::value && !has_il<T>::value && is_arithmetic<typename T::value_type>::value, typename T::value_type> make_random(const T& dc) {
+	enable_if_t<has_data_class_tag<T>::value && !has_il<T>::value && is_arithmetic<typename T::value_type>::value, typename T::value_type> make_random(const T& dc) {
 		return make_random_number(dc.min_v, dc.max_v);
 	}
+	// vector_size : 生成するvectorの長さ
+	// dc : data_class
+	// dup : 要素の重複を許容するならtrue
+	// inc : 昇順にソートするならtrue
+	// dec : 降順にソートするならtrue
 	template<class T>
-	enable_if_t<has_dataclass_tag<T>::value, vector<typename T::value_type>> make_random_vector(size_t vector_size, T& dc, bool dup = true, bool inc = false, bool dec = false) {
+	enable_if_t<has_data_class_tag<T>::value, vector<typename T::value_type>> make_random_vector(size_t vector_size, T& dc, bool dup = true, bool inc = false, bool dec = false) {
 		vector<typename T::value_type> v;
 		assert(!(inc && dec));
 		set<typename T::value_type> s;
@@ -80,8 +89,10 @@ struct random_class {
 		if (dec) sort(v.rbegin(), v.rend());
 		return v;
 	}
+	// dc : data_class
+	// data_class が持つ値域を参照し、すべての要素の random な permutation を生成する。
 	template<class T>
-	enable_if_t<has_dataclass_tag<T>::value && is_integral<typename T::value_type>::value, vector<typename T::value_type>> make_random_permutation(T& dc) {
+	enable_if_t<has_data_class_tag<T>::value && is_integral<typename T::value_type>::value, vector<typename T::value_type>> make_random_permutation(T& dc) {
 		uint32_t vector_size = dc.max_v - dc.min_v + 1;
 		vector<typename T::value_type> v;
 		set<typename T::value_type> s;
@@ -92,6 +103,10 @@ struct random_class {
 		}
 		return v;
 	}
+	// V : 頂点数
+	// E : 辺の数
+	// connected : 連結なグラフを生成させるか
+	// DAG が生成される(頂点番号でトポロジカルソート可能)
 	vector<vector<size_t>> make_random_graph(size_t V, size_t E, bool connected = true) {
 		assert(V > 0);
 		assert(!connected || V - 1 <= E);
@@ -123,6 +138,10 @@ struct random_class {
 		}
 		return res;
 	}
+	// V : 頂点数
+	// E : 辺の数
+	// connected : 連結なグラフを生成させるか
+	// DAG が生成される(頂点番号でトポロジカルソート可能)
 	vector<vector<size_t>> make_random_tree(size_t V) {
 		auto v = make_random_tree_sub(V);
 		vector<vector<size_t>> res(V);
@@ -189,9 +208,19 @@ random_select_class<T> make_data(initializer_list<T> il) {
 }
 
 template<class T>
-enable_if_t<is_arithmetic<T>::value, dataclass<T>> make_data(T min_v, T max_v) {
-	return dataclass<T>(min_v, max_v);
+enable_if_t<is_arithmetic<T>::value, data_class<T>> make_data(T min_v, T max_v) {
+	return data_class<T>(min_v, max_v);
 }
+
+/* data_class と random_select_class について
+  乱数生成する際に用いるクラス。
+    auto X = make_data(3, 5)
+  などのように生成する。
+    auto X = make_data(5, 8)
+    auto X = make_data({5, 6, 7, 8})
+  はほぼ等価。(前者では data_class が生成され、後者では random_select_class が生成される。)
+*/
+
 
 int main(int argc, char** argv) {
 	assert(argc == 2); seed = u32(atoi(argv[1]));
