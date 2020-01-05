@@ -1,3 +1,4 @@
+[![Actions Status](https://github.com/spihill/random_case/workflows/verify/badge.svg)](https://github.com/spihill/random_case/actions)  
 # random_case generator
 ## ソースコード
 - random_case.cpp ... ランダムケース生成をするプログラム。標準出力にテストケースを流す。
