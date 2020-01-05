@@ -1,6 +1,8 @@
 #include <bits/stdc++.h>
 
 using namespace std;
+using u64 = uint_fast64_t;
+using u32 = uint_fast32_t;
 
 struct has_il_impl {
 	template <class T>
@@ -47,11 +49,11 @@ struct dataclass : public base_dataclass<T> {
 	dataclass(Args... args) : base_dataclass<T>(args...) {}
 };
 
+constexpr u32 seed = 1;
+
 struct random_class {
-	static random_device rd;
-	static mt19937 engine;
-	using u64 = uint_fast64_t;
-	random_class() {}
+	mt19937 engine;
+	random_class() : engine(seed) {}
 	template<class T>
 	enable_if_t<is_arithmetic<T>::value, T> make_random(T min_v, T max_v) {
 		return make_random_number(min_v, max_v);
@@ -96,7 +98,7 @@ struct random_class {
 		u64 MAX_E = V * (V - 1) / 2;
 		assert(E <= MAX_E);
 		size_t e = size_t(min<u64>(MAX_E - E, E));
-		vector<set<size_t>> vs_origin = connected ? make_random_tree_sub(V) : vector<set<size_t>>(V);
+		vector<unordered_set<size_t>> vs_origin = connected ? make_random_tree_sub(V) : vector<unordered_set<size_t>>(V);
 		auto vs = vs_origin;
 		e -= (connected && E == e) ? V - 1 : 0;
 		make_random_graph_sub(V, e, vs);
@@ -130,17 +132,16 @@ struct random_class {
 		return res;
 	}
 private:
-	vector<set<size_t>> make_random_tree_sub(size_t V) {
-		vector<set<size_t>> g(V);
+	vector<unordered_set<size_t>> make_random_tree_sub(size_t V) {
+		vector<unordered_set<size_t>> g(V);
 		for (size_t i = 1; i < V; i++) {
 			g[make_random<size_t>(0, i-1)].insert(i);
 		}
 		return g;
 	}
-	void make_random_graph_sub(size_t V, size_t E, vector<set<size_t>>& used) {
+	void make_random_graph_sub(size_t V, size_t E, vector<unordered_set<size_t>>& used) {
 		size_t from, to;
-		size_t cnt = 0;
-		for (size_t i = 0; i < E && cnt++ <= 1000; i++) {
+		for (size_t i = 0; i < E; i++) {
 			make_random_simple_edge_(V, from, to);
 			if (used[from].count(to)) i--;
 			else used[from].insert(to);
@@ -181,8 +182,6 @@ template<> double random_class::make_random_number<double>(double min_v, double 
 template<> long double random_class::make_random_number<long double>(long double min_v, long double max_v) { return uniform_real_distribution<long double>(min_v, max_v)(engine);}
 template<> float random_class::make_random_number<float>(float min_v, float max_v) { return uniform_real_distribution<float>(min_v, max_v)(engine);}
 
-random_device random_class::rd;
-mt19937 random_class::engine(rd());
 
 template<class T>
 random_select_class<T> make_data(initializer_list<T> il) {
@@ -210,4 +209,5 @@ int main() {
 	// for (int i = 0; i < V; i++) {
 	// 	for (auto x : g[i]) cout << i << " " << x << endl;
 	// }
+	return 0;
 }
