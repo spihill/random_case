@@ -49,7 +49,7 @@ struct dataclass : public base_dataclass<T> {
 	dataclass(Args... args) : base_dataclass<T>(args...) {}
 };
 
-constexpr u32 seed = 1;
+u32 seed;
 
 struct random_class {
 	mt19937 engine;
@@ -193,7 +193,8 @@ enable_if_t<is_arithmetic<T>::value, dataclass<T>> make_data(T min_v, T max_v) {
 	return dataclass<T>(min_v, max_v);
 }
 
-int main() {
+int main(int argc, char** argv) {
+	assert(argc == 2); seed = u32(atoi(argv[1]));
 	random_class rc;
 	auto X = make_data(3, 5);
 	auto Y = make_data({1, 2, 4, 5, 6, 9});
@@ -203,11 +204,5 @@ int main() {
 	assert(int(A.size()) == N);
 	for (auto x : A) cout << x << " ";
 	cout << endl;
-	// int V = 10, E = 5;
-	// cout << V << " " << E << endl;
-	// auto g = rc.make_random_graph(V, E, false);
-	// for (int i = 0; i < V; i++) {
-	// 	for (auto x : g[i]) cout << i << " " << x << endl;
-	// }
 	return 0;
 }

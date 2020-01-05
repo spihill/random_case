@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 
 using namespace std;
+using u32 = uint_fast32_t;
 
 #define quote(x) quote_sub(x)
 #define quote_sub(x) #x
@@ -18,13 +19,19 @@ using namespace std;
 bool check_diff(const string& out, const string& ans) {
 	ifstream output(out);
 	ifstream answer(ans);
-	string s, t;
 	while (true) {
 		char o = output.get();
 		char a = answer.get();
 		if (o != a) return false;
 		if (o == EOF && a == EOF) return true;
 	}
+}
+
+bool check_status(const string& in) {
+	ifstream input(in);
+	string s; input >> s;
+	while (input >> s) return false;
+	return s == "AC";
 }
 
 ofstream open_file_append(const string& file_name) {
@@ -51,13 +58,14 @@ int execute(const string& exe_filename, const vector<string>& args, const string
 		if (WIFEXITED(status)) {
 			if (WEXITSTATUS(status) == 0) return 0;
 			open_file_append(RE_message) << "Exited with code " << WEXITSTATUS(status) << "." << endl;
+			return status;
 		} else if (WIFSIGNALED(status)) {
 			int signal = WTERMSIG(status);
 			open_file_append(RE_message) << "Exited with SIGNAL " << signal << "." << endl;
 			if (signal == SIGSEGV) open_file_append(RE_message) << "Segmentation fault." << endl;
 			else if (signal == SIGFPE) open_file_append(RE_message) << "Floating point exception." << endl;
 		}
-		return 1;
+		return -1;
 	} else {
 		char** arg = new char*[args.size() + 1];
 		for (size_t i = 0; i < args.size(); i++) {
@@ -73,7 +81,7 @@ int execute(const string& exe_filename, const vector<string>& args, const string
 	}
 }
 
-void case_check(int& WA, int& RE) {
+void case_check(int& WA, int& RE, u32 seed) {
 	int id = WA + RE;
 	const string random_dir = string(quote(RANDOM_DIR)) + "/case" + to_string(id) + '/';
 	mkdir(random_dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
@@ -87,16 +95,25 @@ void case_check(int& WA, int& RE) {
 	const string answer_re_message = random_dir + "answer_RE" + suff;
 	const string random_re_message = random_dir + "makerandom_RE" + suff;
 	const string dummy = "";
-	if (execute("./random_case.out", {"./random_case.out"}, dummy, input, dummy, random_re_message) != 0) {
+	if (execute("./random_case.out", {"./random_case.out", to_string(seed).c_str()}, dummy, input, dummy, random_re_message) != 0) {
 		cerr << "Runtime Error(random_case.cpp) on case " << id << "." << endl;
 		abort();
 	}
+	if (execute("./main.out", {"./main.out"}, input, output, error, re_message) != 0) RE++;
+#ifdef COMPARE_RESULT
 	if (execute("./correct.out", {"./correct.out"}, input, answer, answer_error, answer_re_message) != 0) {
 		cerr << "Runtime Error(corect.cpp) on case " << id << "." << endl;
 		abort();
-	}
-	if (execute("./main.out", {"./main.out"}, input, output, error, re_message) != 0) RE++;
-	else if (!check_diff(output, answer)) WA++;
+	} else if (!check_diff(output, answer)) WA++;
+#elif VERIFY_RESULT
+	if (execute("./verify.out", {"./verify.out", input.c_str(), output.c_str()}, dummy, answer, answer_error, answer_re_message) != 0) {
+		cerr << "Runtime Error(verify.cpp) on case " << id << "." << endl;
+		abort();
+	} else if (!check_status(answer)) WA++;
+#else
+	cerr << "Please define COMPARE_RESULT or VERIFY_RESULT" << endl;
+	abort();
+#endif
 }
 
 constexpr int NUM_OF_TESTCASES = 10;
@@ -106,10 +123,11 @@ int main() {
 	int WA = 0;
 	int RE = 0;
 	int count = 0;
+	u32 seed = 0;
 	vector<int> wa, re;
 	while (WA + RE < NUM_OF_TESTCASES && count < MAX_LOOP) {
 		int w = WA, r = RE;
-		case_check(WA, RE);
+		case_check(WA, RE, seed++);
 		if (w != WA) wa.push_back(WA + RE - 1);
 		if (r != RE) re.push_back(WA + RE - 1);
 		cout << '\r' << "Running case number : " << count++ << ", WA: " << WA << " RE: "<< RE ; cout.flush();
