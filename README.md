@@ -38,3 +38,11 @@
 - random_case.cpp で用いる seed は check.cpp で指定しているので、同じ seed を使いまわさないように注意。
 - UNIX系のOSでGNU C++じゃないと動かない。ヘッダファイルを適切に変えると動くかもしれない(未検証)が、make は必要。
 - 例外処理が不十分。
+- clone して
+  ```shell
+  make compare
+  ```
+  ```shell
+  make verify
+  ```
+  で動作確認できる。
