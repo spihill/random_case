@@ -21,5 +21,4 @@ jobs:
         pip3 install -U setuptools
         pip3 install -U online-judge-tools=='7.*'
     - name: test
-      env:
       run: ./test/test.sh
