@@ -46,3 +46,9 @@
   make verify
   ```
   で動作確認できる。
+  ```shell
+  Running case number : 118, WA: 4 RE: 6
+  WA on case 0 2 3 6
+  RE on case 1 4 5 7 8 9
+  ```
+  と表示されるならば正しい。

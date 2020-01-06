@@ -99,7 +99,10 @@ void case_check(int& WA, int& RE, u32 seed) {
 		cerr << "Runtime Error(random_case.cpp) on case " << id << "." << endl;
 		abort();
 	}
-	if (execute("./main.out", {"./main.out"}, input, output, error, re_message) != 0) RE++;
+	if (execute("./main.out", {"./main.out"}, input, output, error, re_message) != 0) {
+		RE++;
+		return;
+	}
 #ifdef COMPARE_RESULT
 	if (execute("./correct.out", {"./correct.out"}, input, answer, answer_error, answer_re_message) != 0) {
 		cerr << "Runtime Error(corect.cpp) on case " << id << "." << endl;

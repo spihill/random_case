@@ -9,5 +9,6 @@ int main() {
 	vector<int> v(n);
 	for (int i = 0; i < n; i++) cin >> v[i];
 	for (int i = 0; i < n; i++) res += v[i];
+	if (res == 11) abort();
 	if (res != 10) cout << res << endl;
 }
