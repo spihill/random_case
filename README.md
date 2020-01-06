@@ -52,4 +52,4 @@
   RE on case 1 4 5 7 8 9
   ```
   と表示されるならば正しい。  
-  ただし、 distribution の実装依存らしい。 [参考](https://qiita.com/kusano_k/items/19b92af89f873f4bc1f7)
+  ただし、 distribution の実装依存らしいので、全く同じ結果にはならない可能性がある。 [参考](https://qiita.com/kusano_k/items/19b92af89f873f4bc1f7) 
