@@ -108,7 +108,8 @@ struct random_class {
 	// V : 頂点数
 	// E : 辺の数
 	// connected : 連結なグラフを生成させるか (default : true)
-	// DAG が生成される(頂点番号でトポロジカルソート可能)
+	// dag : DAG を生成する場合はtrue (default : true)
+	// randomize : 頂点番号をシャッフルする場合はtrue
 	// 0-indexed で生成
 	vector<vector<size_t>> make_random_graph(size_t V, size_t E, bool connected = true, bool dag = true, bool randomize = true) {
 		assert(V > 0);
