@@ -51,4 +51,5 @@
   WA on case 0 2 3 6
   RE on case 1 4 5 7 8 9
   ```
-  と表示されるならば正しい。
+  と表示されるならば正しい。  
+  ただし、 distribution の実装依存らしい。 [参考](https://qiita.com/kusano_k/items/19b92af89f873f4bc1f7)
