@@ -3,6 +3,8 @@
 using namespace std;
 using u64 = uint_fast64_t;
 using u32 = uint_fast32_t;
+using i64 = int_fast64_t;
+using i32 = int_fast32_t;
 
 struct has_il_impl {
 	template <class T>
@@ -39,12 +41,14 @@ struct base_data_class<T, enable_if_t<is_arithmetic<T>::value>> {
 
 template<class T>
 struct random_select_class : public base_data_class<size_t> {
+	using data_type = T;
 	vector<T> il;
 	random_select_class(initializer_list<T> il_) : base_data_class(size_t(0), il_.size()-1), il{il_} {}
 };
 
 template<class T>
 struct data_class : public base_data_class<T> {
+	using data_type = T;
 	template<class... Args>
 	data_class(Args... args) : base_data_class<T>(args...) {}
 };
@@ -62,7 +66,7 @@ struct random_class {
 	}
 	// dc : data_class
 	template<class T>
-	enable_if_t<has_data_class_tag<T>::value && has_il<T>::value, typename T::value_type> make_random(const T& dc) {
+	enable_if_t<has_data_class_tag<T>::value && has_il<T>::value, typename T::data_type> make_random(const T& dc) {
 		return dc.il[make_random_number(dc.min_v, dc.max_v)];
 	}
 	// dc : data_class
@@ -76,13 +80,13 @@ struct random_class {
 	// inc : 昇順にソートするならtrue (default : false)
 	// dec : 降順にソートするならtrue (default : false)
 	// 0-indexed で生成
-	template<class T>
-	enable_if_t<has_data_class_tag<T>::value, vector<typename T::value_type>> make_random_vector(size_t vector_size, T& dc, bool dup = true, bool inc = false, bool dec = false) {
-		vector<typename T::value_type> v;
+	template<class T, class D = typename T::data_type>
+	enable_if_t<has_data_class_tag<T>::value, vector<D>> make_random_vector(size_t vector_size, T& dc, bool dup = true, bool inc = false, bool dec = false) {
+		vector<D> v;
 		assert(!(inc && dec));
-		set<typename T::value_type> s;
+		set<D> s;
 		for (size_t i = 0; i < vector_size; i++) {
-			typename T::value_type t = make_random(dc);
+			D t = make_random(dc);
 			if (!dup && s.count(t)) i--;
 			else v.push_back(t), s.insert(t);
 		}
@@ -92,17 +96,15 @@ struct random_class {
 	}
 	// dc : data_class
 	// data_class が持つ値域を参照し、すべての要素の random な permutation を生成する。
-	template<class T>
-	enable_if_t<has_data_class_tag<T>::value && is_integral<typename T::value_type>::value, vector<typename T::value_type>> make_random_permutation(T& dc) {
+	template<class T, class U = typename T::data_type>
+	enable_if_t<has_data_class_tag<T>::value && is_integral<typename T::value_type>::value, vector<U>> make_random_permutation(const T& dc) {
 		uint32_t vector_size = dc.max_v - dc.min_v + 1;
-		vector<typename T::value_type> v;
-		set<typename T::value_type> s;
+		vector<size_t> perm = make_random_permutation_sub(vector_size);
+		vector<U> res(vector_size);
 		for (size_t i = 0; i < vector_size; i++) {
-			typename T::value_type t = make_random(dc);
-			if (s.count(t)) i--;
-			else v.push_back(t), s.insert(t);
+			res[i] = get_nth_element(perm[i], dc);
 		}
-		return v;
+		return res;
 	}
 	// V : 頂点数
 	// E : 辺の数
@@ -112,7 +114,7 @@ struct random_class {
 	vector<vector<size_t>> make_random_graph(size_t V, size_t E, bool connected = true) {
 		assert(V > 0);
 		assert(!connected || V - 1 <= E);
-		u64 MAX_E = V * (V - 1) / 2;
+		u64 MAX_E = u64(V) * (V - 1) / 2;
 		assert(E <= MAX_E);
 		size_t e = size_t(min<u64>(MAX_E - E, E));
 		vector<unordered_set<size_t>> vs_origin = connected ? make_random_tree_sub(V) : vector<unordered_set<size_t>>(V);
@@ -196,6 +198,23 @@ private:
 		while ((to = make_random<size_t>(0, V-1)) == from);
 		if (from > to) swap(from, to);
 	}
+	vector<size_t> make_random_permutation_sub(size_t len) {
+		assert(len);
+		vector<size_t> res(len); iota(res.begin(), res.end(), 0);
+		for (size_t i = len-1; i > 0; i--) {
+			size_t index = make_random<size_t>(0, i);
+			if (i != index) swap(res[i], res[index]);
+		}
+		return res;
+	}
+	template<class T, class U = typename T::data_type>
+	enable_if_t<has_data_class_tag<T>::value && has_il<T>::value, U> get_nth_element(size_t n, const T& dc) {
+		return dc.il[n];
+	}
+	template<class T, class U = typename T::data_type>
+	enable_if_t<has_data_class_tag<T>::value && !has_il<T>::value && is_arithmetic<typename T::value_type>::value, U> get_nth_element(size_t n, const T& dc) {
+		return dc.min_v + static_cast<U>(n);
+	}
 };
 template<> double random_class::make_random_number<double>(double min_v, double max_v) { return uniform_real_distribution<double>(min_v, max_v)(engine);}
 template<> long double random_class::make_random_number<long double>(long double min_v, long double max_v) { return uniform_real_distribution<long double>(min_v, max_v)(engine);}
@@ -226,7 +245,8 @@ int main(int argc, char** argv) {
 	assert(argc == 2); seed = u32(atoi(argv[1]));
 	random_class rc;
 	auto X = make_data(3, 5);
-	auto Y = make_data({1, 2, 4, 5, 6, 9});
+	// auto Y = make_data({1, 2, 4, 5, 6, 9});
+	auto Y = make_data({"1", "2", "4", "5", "6", "9"});
 	int N = rc.make_random(X);
 	cout << N << endl;
 	auto A = rc.make_random_vector(N, Y);
