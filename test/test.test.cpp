@@ -41,14 +41,14 @@ bool is_dag(const vector<vector<size_t>>& g) {
 	return true;
 }
 
-void check_graph(size_t V, size_t E, bool connected, bool dag) {
+void check_graph(size_t V, size_t E, bool connected, bool dag, bool randomized) {
 	assert(V);
 	if (connected && E < V - 1) return;
 	u64 MAX_E = dag ? u64(V) * (V-1) / 2 : u64(V) * (V-1);
 	if (MAX_E < E) return;
 	random_class rc;
 	size_t e = 0;
-	auto g = rc.make_random_graph(V, E, connected, dag);
+	auto g = rc.make_random_graph(V, E, connected, dag, randomized);
 	assert(V == g.size());
 	unordered_set<u64> st;
 	for (size_t i = 0; i < V; i++) {
@@ -78,12 +78,14 @@ void check_graph(size_t V) {
 	random_class rc;
 	for (bool connected : {false, true}) {
 		for (bool dag : {false, true}) {
-			check_graph(V, rc.make_random<size_t>(0, max<i32>(1, i32(V) - 2)), connected, dag);
-			check_graph(V, V-1, connected, dag);
-			check_graph(V, rc.make_random(V-1, V * (V - 1) / 2), connected, dag);
-			check_graph(V, V*(V-1) / 2, connected, dag);
-			check_graph(V, rc.make_random(V * (V - 1) / 2, V * (V - 1)), connected, dag);
-			check_graph(V, V * (V-1), connected, dag);
+			for (bool randomized : {false, true}) {
+				check_graph(V, rc.make_random<size_t>(0, max<i32>(1, i32(V) - 2)), connected, dag, randomized);
+				check_graph(V, V-1, connected, dag, randomized);
+				check_graph(V, rc.make_random(V-1, V * (V - 1) / 2), connected, dag, randomized);
+				check_graph(V, V*(V-1) / 2, connected, dag, randomized);
+				check_graph(V, rc.make_random(V * (V - 1) / 2, V * (V - 1)), connected, dag, randomized);
+				check_graph(V, V * (V-1), connected, dag, randomized);
+			}
 		}
 	}
 }
