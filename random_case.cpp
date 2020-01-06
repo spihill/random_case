@@ -57,7 +57,7 @@ u32 seed;
 
 struct random_class {
 	mt19937 engine;
-	random_class() : engine(seed) {}
+	random_class() : engine(seed++) {}
 	// min_v : 生成する乱数の最小値
 	// max_v : 生成する乱数の最大値
 	template<class T>
@@ -79,7 +79,6 @@ struct random_class {
 	// dup : 要素の重複を許容するならtrue (default : true)
 	// inc : 昇順にソートするならtrue (default : false)
 	// dec : 降順にソートするならtrue (default : false)
-	// 0-indexed で生成
 	template<class T, class D = typename T::data_type>
 	enable_if_t<has_data_class_tag<T>::value, vector<D>> make_random_vector(size_t vector_size, T& dc, bool dup = true, bool inc = false, bool dec = false) {
 		vector<D> v;
@@ -111,16 +110,19 @@ struct random_class {
 	// connected : 連結なグラフを生成させるか (default : true)
 	// DAG が生成される(頂点番号でトポロジカルソート可能)
 	// 0-indexed で生成
-	vector<vector<size_t>> make_random_graph(size_t V, size_t E, bool connected = true) {
+	vector<vector<size_t>> make_random_graph(size_t V, size_t E, bool connected = true, bool dag = true, bool randomize = true) {
 		assert(V > 0);
 		assert(!connected || V - 1 <= E);
-		u64 MAX_E = u64(V) * (V - 1) / 2;
+		u64 MAX_E = dag ? (u64(V) * (V - 1) / 2) : (u64(V) * (V-1));
+		if (E > MAX_E) {
+			cout << V << " " << E << " " << MAX_E << endl;
+		}
 		assert(E <= MAX_E);
 		size_t e = size_t(min<u64>(MAX_E - E, E));
 		vector<unordered_set<size_t>> vs_origin = connected ? make_random_tree_sub(V) : vector<unordered_set<size_t>>(V);
 		auto vs = vs_origin;
 		e -= (connected && E == e) ? V - 1 : 0;
-		make_random_graph_sub(V, e, vs);
+		make_random_graph_sub(V, e, vs, dag);
 		vector<vector<size_t>> res(V);
 		if (E <= MAX_E - E) {
 			for (size_t i = 0; i < V; i++) {
@@ -130,7 +132,8 @@ struct random_class {
 			}
 		} else {
 			for (size_t i = 0; i < V; i++) {
-				for (size_t j = i+1; j < V; j++) {
+				for (size_t j = dag ? (i+1) : 0; j < V; j++) {
+					if (i == j) continue;
 					if (!vs[i].count(j)) res[i].push_back(j);
 				}
 			}
@@ -140,6 +143,7 @@ struct random_class {
 				}
 			}
 		}
+		if (randomize) return make_graph_randomize(res, dag);
 		return res;
 	}
 	// V : 頂点数
@@ -160,13 +164,31 @@ private:
 		}
 		return g;
 	}
-	void make_random_graph_sub(size_t V, size_t E, vector<unordered_set<size_t>>& used) {
+	void make_random_graph_sub(size_t V, size_t E, vector<unordered_set<size_t>>& used, bool dag) {
 		size_t from, to;
 		for (size_t i = 0; i < E; i++) {
 			make_random_simple_edge_(V, from, to);
+			if (dag && from > to) swap(from, to);
 			if (used[from].count(to)) i--;
 			else used[from].insert(to);
 		}
+	}
+	vector<vector<size_t>> make_graph_randomize(const vector<vector<size_t>>& g, bool dag) {
+		vector<vector<size_t>> res(g.size());
+		vector<size_t> perm = make_random_permutation_sub(g.size());
+		vector<set<size_t>> ls(g.size());
+		if (!dag) {
+			for (size_t i = 0; i < g.size(); i++) {
+				for (auto x : g[i]) ls[i].insert(x);
+			}
+		}
+		for (size_t i = 0; i < g.size(); i++) {
+			for (auto x : g[i]) {
+				if (dag || ls[x].count(i) || make_random(0, 1)) res[perm[i]].push_back(perm[x]);
+				else res[perm[x]].push_back(perm[i]);
+			}
+		}
+		return res;
 	}
 	template<class T>
 	T make_random_number(T min_v, T max_v) { return uniform_int_distribution<T>(min_v, max_v)(engine);}
@@ -196,7 +218,6 @@ private:
 	void make_random_simple_edge_(size_t V, size_t& from, size_t& to) {
 		from = make_random<size_t>(0, V-1);
 		while ((to = make_random<size_t>(0, V-1)) == from);
-		if (from > to) swap(from, to);
 	}
 	vector<size_t> make_random_permutation_sub(size_t len) {
 		assert(len);
