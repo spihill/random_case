@@ -75,6 +75,7 @@ struct random_class {
 	// dup : 要素の重複を許容するならtrue
 	// inc : 昇順にソートするならtrue
 	// dec : 降順にソートするならtrue
+	// 0-indexed で生成
 	template<class T>
 	enable_if_t<has_data_class_tag<T>::value, vector<typename T::value_type>> make_random_vector(size_t vector_size, T& dc, bool dup = true, bool inc = false, bool dec = false) {
 		vector<typename T::value_type> v;
@@ -107,6 +108,7 @@ struct random_class {
 	// E : 辺の数
 	// connected : 連結なグラフを生成させるか
 	// DAG が生成される(頂点番号でトポロジカルソート可能)
+	// 0-indexed で生成
 	vector<vector<size_t>> make_random_graph(size_t V, size_t E, bool connected = true) {
 		assert(V > 0);
 		assert(!connected || V - 1 <= E);
@@ -139,7 +141,6 @@ struct random_class {
 		return res;
 	}
 	// V : 頂点数
-	// E : 辺の数
 	// connected : 連結なグラフを生成させるか
 	// DAG が生成される(頂点番号でトポロジカルソート可能)
 	vector<vector<size_t>> make_random_tree(size_t V) {
