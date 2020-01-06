@@ -73,8 +73,8 @@ struct random_class {
 	// vector_size : 生成するvectorの長さ
 	// dc : data_class
 	// dup : 要素の重複を許容するならtrue (default : true)
-	// inc : 昇順にソートするならtrue (default : true)
-	// dec : 降順にソートするならtrue (default : true)
+	// inc : 昇順にソートするならtrue (default : false)
+	// dec : 降順にソートするならtrue (default : false)
 	// 0-indexed で生成
 	template<class T>
 	enable_if_t<has_data_class_tag<T>::value, vector<typename T::value_type>> make_random_vector(size_t vector_size, T& dc, bool dup = true, bool inc = false, bool dec = false) {
