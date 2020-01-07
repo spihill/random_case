@@ -180,6 +180,31 @@ public:
 		cerr << "Cannot ensure_reach (Maybe g doesn\'t have any edges)" << endl;
 		abort();
 	}
+	template<class T>
+	enable_if_t<is_integral<T>::value, vector<T>> make_random_divide(u32 len, T sum, T min_v = 0) {
+		assert(len);
+		if (min_v) {
+			assert(static_cast<i64>(min_v) * static_cast<i64>(len) <= static_cast<i64>(sum));
+			auto res = make_random_divide(len, static_cast<T>(sum - static_cast<i64>(min_v) * len));
+			for (auto& x : res) x += min_v;
+			return res;
+		}
+		assert(0 <= sum);
+		u64 N = sum + len - 1;
+		vector<u64> pos{0, N+1};
+		unordered_set<u64> s;
+		for (size_t i = 1; i < len; i++) {
+			u64 t = make_random<u64>(1, N);
+			if (s.count(t)) i--;
+			else pos.push_back(t), s.insert(t);
+		}
+		sort(pos.begin(), pos.end());
+		vector<T> res(len);
+		for (size_t i = 0; i < len; i++) {
+			res[i] = pos[i+1] - pos[i] - 1;
+		}
+		return res;
+	}
 private:
 	vector<size_t> can_reach_vertexes(const vector<vector<size_t>>& g, int from) {
 		vector<char> vis(g.size());
@@ -233,29 +258,6 @@ private:
 	}
 	template<class T>
 	T make_random_number(T min_v, T max_v) { return uniform_int_distribution<T>(min_v, max_v)(engine);}
-	vector<u64> make_random_divide(size_t len, u64 sum, u64 min_v = 0) {
-		assert(len);
-		if (min_v) {
-			assert(min_v * len <= sum);
-			auto res = make_random_divide(len, sum - min_v * len);
-			for (auto& x : res) x += min_v;
-			return res;
-		}
-		u64 N = sum + len - 1;
-		vector<u64> pos{0, N+1};
-		unordered_set<u64> s;
-		for (size_t i = 1; i < len; i++) {
-			u64 t = make_random<u64>(1, N);
-			if (s.count(t)) i--;
-			else pos.push_back(t), s.insert(t);
-		}
-		sort(pos.begin(), pos.end());
-		vector<u64> res(len);
-		for (size_t i = 0; i < len; i++) {
-			res[i] = pos[i+1] - pos[i] - 1;
-		}
-		return res;
-	}
 	void make_random_simple_edge_(size_t V, size_t& from, size_t& to) {
 		from = make_random<size_t>(0, V-1);
 		while ((to = make_random<size_t>(0, V-1)) == from);

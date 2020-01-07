@@ -122,6 +122,29 @@ void Graph_test() {
 	cerr << "OK" << endl;
 }
 
+void check_random_divide(size_t len, i64 sum, i64 min_v = 0) {
+	random_class rc;
+	auto res = rc.make_random_divide(len, sum, min_v);
+	for (auto x : res) sum -= x;
+	assert(sum == 0);
+}
+
+void Divide_test() {
+	random_class rc;
+	cerr << "Divide test" << endl;
+	for (int i = 0; i < 1000; i++) check_random_divide(rc.make_random(1, 10), rc.make_random(0, 30));
+	for (int i = 0; i < 1000; i++) check_random_divide(rc.make_random(1, 100), 0);
+	for (int i = 0; i < 1000; i++) {
+		i32 min_v = rc.make_random(-1000, 1000);
+		u32 len = rc.make_random(100, 1000);
+		if (min_v < 0) check_random_divide(len, rc.make_random<i64>(min_v * len, 0), min_v);
+		else check_random_divide(len, rc.make_random<i64>(min_v * len, min_v * len + 10000), min_v);
+		check_random_divide(len, min_v * len, min_v);
+	}
+	cerr << "OK" << endl;
+}
+
 int main() {
+	Divide_test();
 	Graph_test();
 }
