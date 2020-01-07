@@ -56,7 +56,9 @@ struct data_class : public base_data_class<T> {
 u32 seed;
 
 struct random_class {
+private:
 	mt19937 engine;
+public:
 	random_class() : engine(seed++) {}
 	// min_v : 生成する乱数の最小値
 	// max_v : 生成する乱数の最大値
