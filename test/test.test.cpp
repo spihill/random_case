@@ -5,6 +5,13 @@ using namespace std;
 #include "../random_case.cpp"
 #undef main
 
+void print_graph(const vector<vector<size_t>>& g) {
+	for (size_t i = 0; i < g.size(); i++) {
+		for (auto x : g[i]) cout << i << ' ' << x << endl;
+	}
+	cout << endl;
+}
+
 bool is_connected(const vector<vector<size_t>>& g) {
 	vector<vector<size_t>> g2(g.size());
 	for (size_t i = 0; i < g.size(); i++) {
@@ -40,6 +47,16 @@ bool is_dag(const vector<vector<size_t>>& g) {
 	for (size_t i = 0; i < g.size(); i++) if (!dfs(dfs, i)) return false;
 	return true;
 }
+bool can_reach(const vector<vector<size_t>>& g, size_t from, size_t to) {
+	vector<char> vis(g.size());
+	auto dfs = [&](auto& f, size_t n) -> void {
+		if (vis[n]) return;
+		vis[n] = true;
+		for (auto x : g[n]) f(f, x);
+	};
+	dfs(dfs, from);
+	return vis[to];
+}
 
 void check_graph(size_t V, size_t E, bool connected, bool dag, bool randomized) {
 	assert(V);
@@ -72,6 +89,12 @@ void check_graph(size_t V, size_t E, bool connected, bool dag, bool randomized) 
 	assert(E == e);
 	if (connected) assert(is_connected(g));
 	if (dag) assert(is_dag(g));
+	if (g.size() < 2 || E == 0) return;
+	size_t from = rc.make_random<size_t>(0, g.size()-1);
+	size_t to;
+	while ((to = rc.make_random<size_t>(0, g.size()-1)) == from);
+	rc.ensure_reach(g, from, to);
+	assert(can_reach(g, from, to));
 }
 
 void check_graph(size_t V) {

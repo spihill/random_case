@@ -94,7 +94,7 @@ struct random_class {
 		return v;
 	}
 	// dc : data_class
-	// data_class が持つ値域を参照し、すべての要素の random な permutation を生成する。
+	// data_class が持つ値域を参照し、値域に含まれるすべての要素の random な permutation を生成する。
 	template<class T, class U = typename T::data_type>
 	enable_if_t<has_data_class_tag<T>::value && is_integral<typename T::value_type>::value, vector<U>> make_random_permutation(const T& dc) {
 		uint32_t vector_size = dc.max_v - dc.min_v + 1;
@@ -115,9 +115,6 @@ struct random_class {
 		assert(V > 0);
 		assert(!connected || V - 1 <= E);
 		u64 MAX_E = dag ? (u64(V) * (V - 1) / 2) : (u64(V) * (V-1));
-		if (E > MAX_E) {
-			cout << V << " " << E << " " << MAX_E << endl;
-		}
 		assert(E <= MAX_E);
 		size_t e = size_t(min<u64>(MAX_E - E, E));
 		vector<unordered_set<size_t>> vs_origin = connected ? make_random_tree_sub(V) : vector<unordered_set<size_t>>(V);
@@ -147,17 +144,58 @@ struct random_class {
 		if (randomize) return make_graph_randomize(res, dag);
 		return res;
 	}
-	// V : 頂点数
-	// DAG が生成される(頂点番号でトポロジカルソート可能)
-	vector<vector<size_t>> make_random_tree(size_t V) {
-		auto v = make_random_tree_sub(V);
-		vector<vector<size_t>> res(V);
-		for (size_t i = 0; i < V; i++) {
-			for (auto x : v[i]) res[i].push_back(x);
+	// g が from から to へ到達可能であることを保証する。
+	// g の形は保持したまま、頂点番号を変える。
+	void ensure_reach(vector<vector<size_t>>& g, size_t from, size_t to) {
+		assert(0 <= from && from < g.size());
+		assert(0 <= to && to < g.size());
+		vector<size_t> random_perm = make_random_permutation_sub(g.size());
+		for (size_t i = 0; i < g.size(); i++) {
+			size_t g_from = random_perm[i];
+			if (g[g_from].size() == 0) continue;
+			vector<size_t> perm(g.size()); iota(perm.begin(), perm.end(), 0);
+			size_t g_to = random_select_from_vector(can_reach_vertexes(g, g_from));
+			if (g_from == from && g_to == to) {
+				return;
+			}else if (g_from == to && g_to == from) {
+				swap(perm[g_from], perm[from]);
+			} else if (g_to == from) {
+				swap(perm[g_from], perm[from]);
+				swap(perm[g_to], perm[to]);
+			} else {
+				swap(perm[g_to], perm[to]);
+				swap(perm[g_from], perm[from]);
+			}
+			vector<vector<size_t>> g2(g.size());
+			for (size_t i = 0; i < g.size(); i++) {
+				for (auto x : g[i]) {
+					g2[perm[i]].push_back(perm[x]);
+				}
+			}
+			g = g2;
+			return;
 		}
-		return res;
+		cerr << "Cannot ensure_reach (Maybe g doesn\'t have any edges)" << endl;
+		abort();
 	}
 private:
+	vector<size_t> can_reach_vertexes(const vector<vector<size_t>>& g, int from) {
+		vector<char> vis(g.size());
+		vector<size_t> res;
+		auto dfs = [&](auto& f, int n) -> void {
+			if (vis[n]) return;
+			if (n != from) res.push_back(n);
+			vis[n] = true;
+			for (auto x : g[n]) f(f, x);
+		};
+		dfs(dfs, from);
+		return res;
+	}
+	template<class T>
+	T random_select_from_vector(const vector<T>& v) {
+		assert(v.size());
+		return v[make_random<size_t>(0, v.size()-1)];
+	}
 	vector<unordered_set<size_t>> make_random_tree_sub(size_t V) {
 		vector<unordered_set<size_t>> g(V);
 		for (size_t i = 1; i < V; i++) {
@@ -223,9 +261,8 @@ private:
 	vector<size_t> make_random_permutation_sub(size_t len) {
 		assert(len);
 		vector<size_t> res(len); iota(res.begin(), res.end(), 0);
-		for (size_t i = len-1; i > 0; i--) {
-			size_t index = make_random<size_t>(0, i);
-			if (i != index) swap(res[i], res[index]);
+		for (size_t i = 0; i < len-1; i++) {
+			swap(res[i], res[make_random<size_t>(i, len-1)]);
 		}
 		return res;
 	}
